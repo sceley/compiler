@@ -108,9 +108,19 @@ function scan () {
 			sum += peek;
 			readch();
 		} while (isDigit(peek))
-		backch();
-		peek = ' ';
-		return `(${table.other['sum']}, ${sum})`;
+		if (isLetter(peek)) {
+			do {
+				sum += peek;
+				readch();
+			} while (isLetterOrDigit(peek))
+			backch();
+			peek = ' ';
+			return `(error, ${sum}, 识别出错 标识符不能以数字开头)`;
+		} else {
+			backch();
+			peek = ' ';
+			return `(${table.other['sum']}, ${sum})`;
+		}
 	}
 
 	if (isLetter(peek)) {
@@ -128,7 +138,14 @@ function scan () {
 		}
 	}
 
-	let token = `(${table.operator[peek]}, ${peek})`;
-	peek = ' ';
-	return token;
+	if (peek in table.operator) {
+		let token = `(${table.operator[peek]}, ${peek})`;
+		peek = ' ';
+		return token;
+	} else {
+		let token = `(warning, ${peek}, 不能识别)`;
+		peek = ' ';
+		return token;
+	}
 }
+
