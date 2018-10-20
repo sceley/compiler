@@ -17,7 +17,7 @@ let table = JSON.parse(fs.readFileSync('./lexical.json', 'utf8'));
 
 rl.on('line', (data) => {
 	sourceCode += data.trim();
-	if (sourceCode[sourceCode.length - 1] === '#') {
+	if (sourceCode[sourceCode.length - 1] == '#') {
 		analysis(sourceCode);
 		rl.close();
 	} else {
@@ -30,11 +30,15 @@ function analysis (sourceCode) {
 	do {
 		const result = scan();
 		console.log(result);
-	} while (index < sourceCode.length || peek != ' ')
+	} while (index < sourceCode.length)
 };
 
 function readch () {
 	peek = sourceCode[index++];
+}
+
+function backch () {
+	index--;
 }
 
 function isKeyword (keyword) {
@@ -67,28 +71,34 @@ function scan () {
 			readch();
 			if (peek == '=') {
 				peek = ' ';
-				return `<${table.operator[':=']}, :=>`;
+				return `(${table.operator[':=']}, :=)`;
 			} else {
-				return `<${table.operator[':']}, :>`;
+				backch();
+				peek = ' ';
+				return `(${table.operator[':']}, :)`;
 			}
 		case '<':
 			readch();
 			if (peek == '=') {
 				peek = ' ';
-				return `<${table.operator['<=']}, <=>`;
+				return `(${table.operator['<=']}, <=)`;
 			} else if (peek == '>') {
 				peek = ' ';
-				return `<${table.operator['<>']}, <>>`;
+				return `(${table.operator['<>']}, <>)`;
 			} else {
-				return `<${table.operator['<']}, <>`;
+				backch();
+				peek = ' ';
+				return `(${table.operator['<']}, <)`;
 			}
 		case '>':
 			readch();
 			if (peek == '=') {
 				peek = ' ';
-				return `<${table.operator['>=']}, >=>`;
+				return `(${table.operator['>=']}, >=)`;
 			} else {
-				return `<${table.operator['>']}, >>`;
+				backch();
+				peek = ' ';
+				return `(${table.operator['>']}, >)`;
 			}
 	}
 
@@ -98,7 +108,9 @@ function scan () {
 			sum += peek;
 			readch();
 		} while (isDigit(peek))
-		return `<${table.other['sum']}, ${sum}>`;
+		backch();
+		peek = ' ';
+		return `(${table.other['sum']}, ${sum})`;
 	}
 
 	if (isLetter(peek)) {
@@ -107,14 +119,16 @@ function scan () {
 			letter += peek;
 			readch();
 		} while (isLetterOrDigit(peek))
+		backch();
+		peek = ' ';
 		if (isKeyword(letter)) {
-			return `<${table.keyword[letter]}, ${letter}>`;
+			return `(${table.keyword[letter]}, ${letter})`;
 		} else {
-			return `<${table.other['id']}, ${letter}>`;
+			return `(${table.other['id']}, ${letter})`;
 		}
 	}
 
-	let token = `<${table.operator[peek]}, ${peek}>`;
+	let token = `(${table.operator[peek]}, ${peek})`;
 	peek = ' ';
 	return token;
 }
