@@ -1,5 +1,6 @@
 const readline = require('readline');
 const fs = require('fs');
+const table = require('./lexical.json');
 
 const rl = readline.createInterface({
 	input: process.stdin,
@@ -12,7 +13,6 @@ rl.prompt();
 let sourceCode = '';
 let peek = ' ';
 let index = 0;
-let table = JSON.parse(fs.readFileSync('./lexical.json', 'utf8'));
 
 
 rl.on('line', (data) => {
