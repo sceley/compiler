@@ -7,7 +7,6 @@ const id3 = { name: 'id3' };
 const tblptr = []; //保存指向外围过程符号表的指针
 const offset = []; //其栈顶元素是下一个当前过程中局部对象可用的相对地址
 const T1 = {}, T2 = {}, T3 = {}, T4 = {};
-const D = {}, D1 = {}, D2 = {}, D3 = {}, D4 = {};
 
 //1. t = mktable(nil); push(t,tblptr); push(0,offset)
 let t = mktable(null);
