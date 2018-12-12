@@ -25,7 +25,7 @@
     while | 4 | <>  21
     do | 5 | <= | 22
     end | 6 | > | 23
-    letter（letter||digit）* | 10 | >= | 24
+    letter（letter\digit）* | 10 | >= | 24
     digit digit* | 11 | = | 25
     \+ | 13 | ; | 26
     \- | 14 | ( | 27
