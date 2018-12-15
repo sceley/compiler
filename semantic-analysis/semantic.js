@@ -22,7 +22,7 @@ enter(getTop(tblptr), id1.name, T1.type, getTop(offset));
 setTop(getTop(offset) + T1.width, offset);
 
 //4. T.type = integer; T.width = 4
-T3.type = 'interger';
+T3.type = 'integer';
 T3.width = 4;
 
 //5. T.type = pointer(T1.type); T.width = 4
