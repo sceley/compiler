@@ -1,6 +1,6 @@
 const symbolTable = require('./symbol-table.json');
 
-let codeString = '';
+let codeString;
 let ch = ' ';
 let index = 0;
 
@@ -15,7 +15,8 @@ class Token {
 	}
 }
 
-function analysis(codeString) {
+function analysis(arg) {
+	codeString = arg;
 	let tokens = [];
 	do {
 		const token = scan();
@@ -25,8 +26,7 @@ function analysis(codeString) {
 };
 
 function readch() {
-	ch = codeString[index];
-	index++;
+	ch = codeString[index++];
 }
 
 function backch() {
@@ -50,15 +50,13 @@ function isLetterOrDigit(arg) {
 }
 
 function scan() {
-	for (; ;) {
+	for (; ; ) {
 		if (ch == ' ') {
 			readch();
-			continue;
 		} else {
 			break;
 		}
 	}
-
 	switch (ch) {
 		case ':':
 			readch();
@@ -127,7 +125,7 @@ function scan() {
 		if (isKeyword(letter)) {
 			return new Token(letter, symbolTable.keyword[letter]);
 		} else {
-			return Token(letter, symbolTable.other['id']);
+			return new Token(letter, symbolTable.other['id']);
 		}
 	}
 
