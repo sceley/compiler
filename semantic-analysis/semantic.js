@@ -1,50 +1,57 @@
-const { mktable, getTop, setTop, push, enter, pointer, addwidth, pop } = require('./method');
+const readline = require('readline');
+const table = require('./analysis-table.json');
 
-const id1 = { name: 'id1' };
-const id2 = { name: 'id2' };
-const id3 = { name: 'id3' };
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: '请输入字符串($结束)> '
+});
 
-const tblptr = []; //保存指向外围过程符号表的指针
-const offset = []; //其栈顶元素是下一个当前过程中局部对象可用的相对地址
-const T1 = {}, T2 = {}, T3 = {}, T4 = {};
+rl.prompt();
 
-//1. t = mktable(nil); push(t,tblptr); push(0,offset)
-let t = mktable(null);
-push(t, tblptr);
-push(0, offset);
-
-//2. T.type = real; T.width = 8
-T1.type = 'real';
-T1.width = 8;
-
-//3. enter(top(tblptr), id.name, T.type, top(offset)); top(offset) = top(offset) + T.width
-enter(getTop(tblptr), id1.name, T1.type, getTop(offset));
-setTop(getTop(offset) + T1.width, offset);
-
-//4. T.type = integer; T.width = 4
-T3.type = 'integer';
-T3.width = 4;
-
-//5. T.type = pointer(T1.type); T.width = 4
-T2.type = pointer(T3.type);
-T2.width = 4;
-
-//6. enter(top(tblptr), id.name, T.type, top(offset)); top(offset) = top(offset) + T.width
-enter(getTop(tblptr), id2.name, T2.type, getTop(offset));
-setTop(getTop(offset) + T2.width, offset);
-
-// 7. T.type = integer; T.width = 4
-T4.type = 'integer';
-T4.width = 4;
+let sourceCode = '';
 
 
-//8. enter(top(tblptr), id.name, T.type, top(offset)); top(offset) = top(offset) + T.width
-enter(getTop(tblptr), id3.name, T4.type, getTop(offset));
-setTop(getTop(offset) + T4.width, offset);
+rl.on('line', (data) => {
+    sourceCode += data.trim();
+    if (sourceCode[sourceCode.length - 1] == '$') {
+        analysis(sourceCode);
+        rl.close();
+    } else {
+        rl.prompt();
+    }
+});
 
-//9. addwidth(top(tblptr), top(offset)); pop(tblptr); pop(offset)
-addwidth(getTop(tblptr), getTop(offset));
-pop(tblptr);
-pop(offset);
+function head(stack) {
+    return stack[stack.length - 1];
+};
 
-console.log(t);
+
+function analysis(sourceCode) {
+    let stack = [0];
+    let input = sourceCode + "$";
+
+    let a = input[0];
+    let s = head(stack);
+    while (1) {
+        console.log(a);
+        console.log(table["ACTION"][s]);
+        if (table["ACTION"][s][a][0] == 's') {
+            stack.push(table["ACTION"][s][a].slice(1));
+            input = input.slice(1);
+            a = input[0];
+        } else if (table["ACTION"][s][a][0] == 'r') {
+            let grammar = table["GRAMMAR"][table["ACTION"][s][a].slice(1)];
+            let A = grammar.split("—>")[0];
+            let right = grammar.split("—>")[1];
+            for (let i = 0; i < right.length; i++) {
+                stack.pop();
+            }
+            let t = head(stack);
+            stack.push(table["ACTION"][t][A]);
+            console.log(grammar);
+        } else if (table["ACTION"][s][a] == 'acc') {
+            break;
+        }
+    }
+};

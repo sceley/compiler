@@ -1,151 +1,145 @@
-const readline = require('readline');
-const fs = require('fs');
-const table = require('./lexical.json');
+const symbolTable = require('./symbol-table.json');
 
-const rl = readline.createInterface({
-	input: process.stdin,
-	output: process.stdout,
-	prompt: '请输入字符串(#结束)> '
-});
-
-rl.prompt();
-
-let sourceCode = '';
-let peek = ' ';
+let codeString = '';
+let ch = ' ';
 let index = 0;
 
-
-rl.on('line', (data) => {
-	sourceCode += data.trim();
-	if (sourceCode[sourceCode.length - 1] == '#') {
-		analysis(sourceCode);
-		rl.close();
-	} else {
-		rl.prompt();
+class Token {
+	constructor(name, value) {
+		this.name = name;
+		this.value = value;
 	}
-});
 
-
-function analysis (sourceCode) {
-	do {
-		const result = scan();
-		console.log(result);
-	} while (index < sourceCode.length)
-};
-
-function readch () {
-	peek = sourceCode[index++];
+	print() {
+		console.log(`<${this.name}, ${this.value}>`);
+	}
 }
 
-function backch () {
+function analysis(codeString) {
+	let tokens = [];
+	do {
+		const token = scan();
+		tokens.push(token);
+	} while (index < codeString.length)
+	return tokens;
+};
+
+function readch() {
+	ch = codeString[index];
+	index++;
+}
+
+function backch() {
 	index--;
 }
 
-function isKeyword (keyword) {
-	return keyword in table.keyword;
+function isKeyword(keyword) {
+	return keyword in symbolTable.keyword;
 }
 
-function isDigit (number) {
-	return	/^[0-9]$/.test(number);
+function isDigit(number) {
+	return /^[0-9]$/.test(number);
 }
 
-function isLetter (letter) {
+function isLetter(letter) {
 	return /^[a-zA-Z]$/.test(letter);
 }
 
-function isLetterOrDigit(argument) {
-	return /^[a-zA-Z0-9]$/.test(argument);
+function isLetterOrDigit(arg) {
+	return /^[a-zA-Z0-9]$/.test(arg);
 }
 
-function scan () {
-	for (; ; readch()) {
-		if (peek == ' ') {
+function scan() {
+	for (; ;) {
+		if (ch == ' ') {
+			readch();
 			continue;
 		} else {
 			break;
 		}
 	}
 
-	switch (peek) {
+	switch (ch) {
 		case ':':
 			readch();
-			if (peek == '=') {
-				peek = ' ';
-				return `(${table.operator[':=']}, :=)`;
+			if (ch == '=') {
+				ch = ' ';
+				return new Token(":=", symbolTable.operator[':=']);
 			} else {
 				backch();
-				peek = ' ';
-				return `(${table.operator[':']}, :)`;
+				ch = ' ';
+				return new Token(":", symbolTable.operator[':']);
 			}
 		case '<':
 			readch();
-			if (peek == '=') {
-				peek = ' ';
-				return `(${table.operator['<=']}, <=)`;
-			} else if (peek == '>') {
-				peek = ' ';
-				return `(${table.operator['<>']}, <>)`;
+			if (ch == '=') {
+				ch = ' ';
+				return new Token('<=', symbolTable.operator['<=']);
+			} else if (ch == '>') {
+				ch = ' ';
+				return new Token('<>', symbolTable.operator['<>']);
 			} else {
 				backch();
-				peek = ' ';
-				return `(${table.operator['<']}, <)`;
+				ch = ' ';
+				return new Token('<', symbolTable.operator['<']);
 			}
 		case '>':
 			readch();
-			if (peek == '=') {
-				peek = ' ';
-				return `(${table.operator['>=']}, >=)`;
+			if (ch == '=') {
+				ch = ' ';
+				return new Token('>=', symbolTable.operator['>=']);
 			} else {
 				backch();
-				peek = ' ';
-				return `(${table.operator['>']}, >)`;
+				ch = ' ';
+				return new Token('>', symbolTable.operator['>']);
 			}
 	}
 
-	if (isDigit(peek)) {
+	if (isDigit(ch)) {
 		let sum = '';
 		do {
-			sum += peek;
+			sum += ch;
 			readch();
-		} while (isDigit(peek))
-		if (isLetter(peek)) {
+		} while (isDigit(ch))
+		if (isLetter(ch)) {
 			do {
-				sum += peek;
+				sum += ch;
 				readch();
-			} while (isLetterOrDigit(peek))
+			} while (isLetterOrDigit(ch))
 			backch();
-			peek = ' ';
+			ch = ' ';
 			return `(error, ${sum}, 识别出错 标识符不能以数字开头)`;
 		} else {
 			backch();
-			peek = ' ';
-			return `(${table.other['sum']}, ${sum})`;
+			ch = ' ';
+			return new Token(sum, symbolTable.other['sum']);
 		}
 	}
 
-	if (isLetter(peek)) {
+	if (isLetter(ch)) {
 		let letter = '';
 		do {
-			letter += peek;
+			letter += ch;
 			readch();
-		} while (isLetterOrDigit(peek))
+		} while (isLetterOrDigit(ch))
 		backch();
-		peek = ' ';
+		ch = ' ';
 		if (isKeyword(letter)) {
-			return `(${table.keyword[letter]}, ${letter})`;
+			return new Token(letter, symbolTable.keyword[letter]);
 		} else {
-			return `(${table.other['id']}, ${letter})`;
+			return Token(letter, symbolTable.other['id']);
 		}
 	}
 
-	if (peek in table.operator) {
-		let token = `(${table.operator[peek]}, ${peek})`;
-		peek = ' ';
+	if (ch in symbolTable.operator) {
+		let token = new Token(ch, symbolTable.operator[ch]);
+		ch = ' ';
 		return token;
 	} else {
-		let token = `(warning, ${peek}, 不能识别)`;
-		peek = ' ';
+		let token = `(warning, ${ch}, 不能识别)`;
+		ch = ' ';
 		return token;
 	}
 }
 
+module.exports = analysis;
