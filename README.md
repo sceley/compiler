@@ -34,8 +34,8 @@
 
 3. 测试句子:
 
-    - begin x:=9; if x>9 then x:=2*x+1/3; end #
-    - begin x:=9a; if x><9 then x<>2*x+1/3;, end #
+    1. begin x:=9; if x>9 then x:=2*x+1/3; end #
+    2. begin x:=9a; if x><9 then x<>2*x+1/3;, end #
 
 4. 输出：
     
@@ -49,10 +49,10 @@
 
 2. 测试句子:
 
-    - i+i*i$
-    - i++i**i$
-    - (i+i*i)+i$
-    - i+i*i+$
+    1. i+i*i$
+    2. i++i**i$
+    3. (i+i*i)+i$
+    4. i+i*i+$
 
 ## 语义分析器
 
@@ -79,8 +79,7 @@
     6. 栈offset：其栈顶元素是下一个当前过程中局部对象可用的相对地址。
 
 2. 测试句子:
-   1. d1 : real ; id2 :↑integer; id3:integer
-
-3. 语法分析树
-
-![语法分析树](syntax-analysis-tree.png)
+   1. id1:real;id2:↑integer;id3:integer$
+   2. id1:real;proc id2;id3:real;s$
+   3. id1:↑real;proc id2;id3:integer;s$
+   4. id1:real;id2:↑real;proc id3;id4:real;s; proc id5;id6:real;s;id7:real $

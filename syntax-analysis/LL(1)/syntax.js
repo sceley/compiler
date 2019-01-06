@@ -10,7 +10,7 @@ const rl = readline.createInterface({
 rl.prompt();
 
 let sourceCode = '';
-let table = require('./pre-analysis-table.json');
+let table = require('./analysis-table.json');
 
 rl.on('line', (data) => {
     sourceCode += data.trim();

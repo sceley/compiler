@@ -1,57 +1,85 @@
-const readline = require('readline');
-const table = require('./analysis-table.json');
+const analysisTable = require('./analysis-table.json');
+const lexicalAnalysis = require('../lexical-analysis/lexical');
+const Rule = require('./Rule');
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    prompt: '请输入字符串($结束)> '
-});
+function first(stack) {
+    return stack[0];
+};
 
-rl.prompt();
-
-let sourceCode = '';
-
-
-rl.on('line', (data) => {
-    sourceCode += data.trim();
-    if (sourceCode[sourceCode.length - 1] == '$') {
-        analysis(sourceCode);
-        rl.close();
-    } else {
-        rl.prompt();
-    }
-});
-
-function head(stack) {
+function last(stack) {
     return stack[stack.length - 1];
 };
 
 
-function analysis(sourceCode) {
+function analysis(codeString) {
+    const tokens = lexicalAnalysis(codeString);
+    let w = tokens.map(token => {
+        return token.name;
+    });
     let stack = [0];
-    let input = sourceCode + "$";
 
-    let a = input[0];
-    let s = head(stack);
+    let a = first(w);
+    let ids = [];
+    let rule = new Rule();
     while (1) {
-        console.log(a);
-        console.log(table["ACTION"][s]);
-        if (table["ACTION"][s][a][0] == 's') {
-            stack.push(table["ACTION"][s][a].slice(1));
-            input = input.slice(1);
-            a = input[0];
-        } else if (table["ACTION"][s][a][0] == 'r') {
-            let grammar = table["GRAMMAR"][table["ACTION"][s][a].slice(1)];
-            let A = grammar.split("—>")[0];
-            let right = grammar.split("—>")[1];
-            for (let i = 0; i < right.length; i++) {
-                stack.pop();
+        let s = last(stack);
+        let action;
+        if (/^id\d+$/.test(a)) {
+            action = analysisTable["ACTION"][s]['id'];
+            let flag = true;
+            ids.forEach(id => {
+                if (id.name == a) {
+                    flag = false;
+                }
+            });
+            if (flag) {
+                let id = {
+                    name: a
+                };
+                ids.push(id);
             }
-            let t = head(stack);
-            stack.push(table["ACTION"][t][A]);
-            console.log(grammar);
-        } else if (table["ACTION"][s][a] == 'acc') {
+        } else {
+            action = analysisTable["ACTION"][s][a];
+        }
+        if (action.slice(0, 1) == 's') {
+            console.log(stack.join('') + '\t', w.join('') + '\t', "移入");
+            stack.push(action.slice(1));
+            w = w.slice(1);
+            a = first(w);
+        } else if (action.slice(0, 1) == 'r') {
+            let grammar = analysisTable["GRAMMAR"][action.slice(1)];
+            console.log(stack.join('') + '\t', w.join('') + '\t', `归约${grammar}`);
+            let A = grammar.split("—>")[0];
+            let β = grammar.split("—>")[1];
+            if (β != 'ε') {
+                if (β == 'MD') {
+                    for (let i = 0; i < 2; i++) {
+                        stack.pop();
+                    }
+                } else {
+                    const tokens = lexicalAnalysis(β);
+                    for (let i = 0; i < tokens.length; i++) {
+                        stack.pop();
+                    }
+                }
+            }
+            let t = last(stack);
+            stack.push(analysisTable["GOTO"][t][A]);
+            const method$ = `method${action.slice(1)}`;
+            if (method$ == 'method3' || method$ == 'method4') {
+                rule[method$](ids.pop());
+            } else {
+                rule[method$]();
+            }
+        } else if (action == 'acc') {
+            console.log(stack.join('') + '\t', w.join('') + '\t', `接受`);
+            rule.print();
+            break;
+        } else {
+            console.log('分析出错');
             break;
         }
     }
 };
+
+module.exports = analysis;

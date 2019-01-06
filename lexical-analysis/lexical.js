@@ -1,8 +1,8 @@
 const symbolTable = require('./symbol-table.json');
 
 let codeString;
-let ch = ' ';
-let index = 0;
+let ch;
+let index;
 
 class Token {
 	constructor(name, value) {
@@ -17,11 +17,15 @@ class Token {
 
 function analysis(arg) {
 	codeString = arg;
+	ch = ' ';
+	index = 0;
 	let tokens = [];
 	do {
 		const token = scan();
-		tokens.push(token);
-	} while (index < codeString.length)
+		if (token != null) {
+			tokens.push(token);
+		}
+	} while (index < codeString.length || (ch != ' ' && ch != undefined))
 	return tokens;
 };
 
@@ -29,8 +33,14 @@ function readch() {
 	ch = codeString[index++];
 }
 
-function backch() {
-	index--;
+function preReadch(c) {
+	readch();
+	if (ch != c) {
+		return false;
+	} else {
+		ch = ' ';
+		return true;
+	}
 }
 
 function isKeyword(keyword) {
@@ -50,78 +60,67 @@ function isLetterOrDigit(arg) {
 }
 
 function scan() {
-	for (; ; ) {
+	for (; ; readch()) {
 		if (ch == ' ') {
-			readch();
+			continue;
 		} else {
 			break;
 		}
 	}
+
 	switch (ch) {
 		case ':':
-			readch();
-			if (ch == '=') {
-				ch = ' ';
+			if (preReadch('=')) {
 				return new Token(":=", symbolTable.operator[':=']);
 			} else {
-				backch();
-				ch = ' ';
 				return new Token(":", symbolTable.operator[':']);
 			}
 		case '<':
-			readch();
-			if (ch == '=') {
-				ch = ' ';
+			if (preReadch('=')) {
 				return new Token('<=', symbolTable.operator['<=']);
 			} else if (ch == '>') {
 				ch = ' ';
 				return new Token('<>', symbolTable.operator['<>']);
 			} else {
-				backch();
-				ch = ' ';
 				return new Token('<', symbolTable.operator['<']);
 			}
 		case '>':
-			readch();
-			if (ch == '=') {
-				ch = ' ';
+			if (preReadch('=')) {
 				return new Token('>=', symbolTable.operator['>=']);
 			} else {
-				backch();
-				ch = ' ';
 				return new Token('>', symbolTable.operator['>']);
 			}
 	}
 
 	if (isDigit(ch)) {
 		let sum = '';
+
 		do {
 			sum += ch;
 			readch();
 		} while (isDigit(ch))
+
 		if (isLetter(ch)) {
 			do {
 				sum += ch;
 				readch();
 			} while (isLetterOrDigit(ch))
-			backch();
-			ch = ' ';
-			return `(error, ${sum}, 识别出错 标识符不能以数字开头)`;
+
+			console.error(`${sum} 是错误的标识符`);
+			return null;
 		} else {
-			backch();
-			ch = ' ';
 			return new Token(sum, symbolTable.other['sum']);
 		}
 	}
 
 	if (isLetter(ch)) {
 		let letter = '';
+
 		do {
 			letter += ch;
 			readch();
 		} while (isLetterOrDigit(ch))
-		backch();
-		ch = ' ';
+
 		if (isKeyword(letter)) {
 			return new Token(letter, symbolTable.keyword[letter]);
 		} else {
@@ -134,9 +133,9 @@ function scan() {
 		ch = ' ';
 		return token;
 	} else {
-		let token = `(warning, ${ch}, 不能识别)`;
+		console.error(`${ch} 不能被识别`);
 		ch = ' ';
-		return token;
+		return null;
 	}
 }
 
